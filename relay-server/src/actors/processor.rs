@@ -2189,9 +2189,9 @@ impl EnvelopeProcessorService {
         }
 
         if_processing!({
-            self.enforce_quotas(state)?;
             // We need the event parsed in order to set the profile context on it
             self.process_profiles(state);
+            self.enforce_quotas(state)?;
         });
 
         if state.has_event() {
