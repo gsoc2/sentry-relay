@@ -189,7 +189,7 @@ where
 }
 
 /// A mixture of a hashmap and an array.
-#[derive(Clone, Debug, Default, PartialEq, Empty, IntoValue)]
+#[derive(Clone, Debug, Default, PartialEq, Empty, IntoValue, Serialize, Deserialize)]
 pub struct PairList<T>(pub Array<T>);
 
 impl<T, K, V> PairList<T>

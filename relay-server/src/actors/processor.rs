@@ -1026,31 +1026,64 @@ impl EnvelopeProcessorService {
     #[cfg(feature = "processing")]
     fn process_profiles(&self, state: &mut ProcessEnvelopeState) {
         state.envelope.retain_items(|item| match item.ty() {
-            ItemType::Profile => match relay_profiling::expand_profile(&item.payload()) {
-                Ok((profile_id, payload)) => {
-                    if payload.len() <= self.config.max_profile_size() {
-                        if let Some(event) = state.event.value_mut() {
-                            if event.ty.value() == Some(&EventType::Transaction) {
-                                let contexts = event.contexts.get_or_insert_with(Contexts::new);
-                                contexts.add(SentryContext::Profile(Box::new(ProfileContext {
-                                    profile_id: Annotated::new(profile_id),
-                                })));
+            ItemType::Profile => {
+                let tags = match state.event.value() {
+                    Some(event) if event.ty.value() == Some(&EventType::Transaction) => {
+                        Some(event.tags)
+                    }
+                    _ => None,
+                };
+                match relay_profiling::expand_profile(&item.payload(), tags) {
+                    Ok((profile_id, payload)) => {
+                        if payload.len() <= self.config.max_profile_size() {
+                            if let Some(event) = state.event.value_mut() {
+                                if event.ty.value() == Some(&EventType::Transaction) {
+                                    let contexts = event.contexts.get_or_insert_with(Contexts::new);
+                                    contexts.add(SentryContext::Profile(Box::new(
+                                        ProfileContext {
+                                            profile_id: Annotated::new(profile_id),
+                                        },
+                                    )));
+                                }
                             }
+                            item.set_payload(ContentType::Json, payload);
+                            true
+                        } else {
+                            if let Some(event) = state.event.value_mut() {
+                                if event.ty.value() == Some(&EventType::Transaction) {
+                                    let contexts = event.contexts.get_or_insert_with(Contexts::new);
+                                    contexts.remove(ProfileContext::default_key());
+                                }
+                            }
+                            state.envelope_context.track_outcome(
+                                Outcome::Invalid(DiscardReason::Profiling(
+                                    relay_profiling::discard_reason(
+                                        relay_profiling::ProfileError::ExceedSizeLimit,
+                                    ),
+                                )),
+                                DataCategory::Profile,
+                                1,
+                            );
+                            false
                         }
-                        item.set_payload(ContentType::Json, payload);
-                        true
-                    } else {
+                    }
+                    Err(err) => {
                         if let Some(event) = state.event.value_mut() {
                             if event.ty.value() == Some(&EventType::Transaction) {
                                 let contexts = event.contexts.get_or_insert_with(Contexts::new);
                                 contexts.remove(ProfileContext::default_key());
                             }
                         }
+
+                        match err {
+                            relay_profiling::ProfileError::InvalidJson(_) => {
+                                relay_log::warn!("invalid profile: {}", LogError(&err));
+                            }
+                            _ => relay_log::debug!("invalid profile: {}", err),
+                        };
                         state.envelope_context.track_outcome(
                             Outcome::Invalid(DiscardReason::Profiling(
-                                relay_profiling::discard_reason(
-                                    relay_profiling::ProfileError::ExceedSizeLimit,
-                                ),
+                                relay_profiling::discard_reason(err),
                             )),
                             DataCategory::Profile,
                             1,
@@ -1058,30 +1091,7 @@ impl EnvelopeProcessorService {
                         false
                     }
                 }
-                Err(err) => {
-                    if let Some(event) = state.event.value_mut() {
-                        if event.ty.value() == Some(&EventType::Transaction) {
-                            let contexts = event.contexts.get_or_insert_with(Contexts::new);
-                            contexts.remove(ProfileContext::default_key());
-                        }
-                    }
-
-                    match err {
-                        relay_profiling::ProfileError::InvalidJson(_) => {
-                            relay_log::warn!("invalid profile: {}", LogError(&err));
-                        }
-                        _ => relay_log::debug!("invalid profile: {}", err),
-                    };
-                    state.envelope_context.track_outcome(
-                        Outcome::Invalid(DiscardReason::Profiling(
-                            relay_profiling::discard_reason(err),
-                        )),
-                        DataCategory::Profile,
-                        1,
-                    );
-                    false
-                }
-            },
+            }
             _ => true,
         });
     }

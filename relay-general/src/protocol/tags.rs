@@ -1,7 +1,10 @@
 use crate::protocol::{AsPair, LenientString, PairList};
 use crate::types::{Annotated, Array, FromValue, Value};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Default, PartialEq, Empty, IntoValue, ProcessValue)]
+#[derive(
+    Clone, Debug, Default, PartialEq, Empty, IntoValue, ProcessValue, Serialize, Deserialize,
+)]
 #[cfg_attr(feature = "jsonschema", derive(JsonSchema))]
 pub struct TagEntry(
     #[metastructure(max_chars = "tag_key", allow_chars = "a-zA-Z0-9_.:-")] pub Annotated<String>,
@@ -42,7 +45,18 @@ impl FromValue for TagEntry {
 }
 
 /// Manual key/value tag pairs.
-#[derive(Clone, Debug, Default, PartialEq, Empty, FromValue, IntoValue, ProcessValue)]
+#[derive(
+    Clone,
+    Debug,
+    Default,
+    PartialEq,
+    Empty,
+    FromValue,
+    IntoValue,
+    ProcessValue,
+    Serialize,
+    Deserialize,
+)]
 #[cfg_attr(feature = "jsonschema", derive(JsonSchema))]
 pub struct Tags(pub PairList<TagEntry>);
 

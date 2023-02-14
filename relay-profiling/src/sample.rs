@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use relay_general::protocol::{Addr, EventId};
+use relay_general::protocol::{Addr, EventId, Tags};
+use relay_general::types::Annotated;
 
 use crate::error::ProfileError;
 use crate::measurements::Measurement;
@@ -163,6 +164,9 @@ struct SampleProfile {
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     measurements: Option<HashMap<String, Measurement>>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    tags: Option<Annotated<Tags>>,
 }
 
 impl SampleProfile {
@@ -268,8 +272,12 @@ fn parse_profile(payload: &[u8]) -> Result<SampleProfile, ProfileError> {
     Ok(profile)
 }
 
-pub fn parse_sample_profile(payload: &[u8]) -> Result<Vec<u8>, ProfileError> {
-    let profile = parse_profile(payload)?;
+pub fn parse_sample_profile(
+    payload: &[u8],
+    tags: Option<Annotated<Tags>>,
+) -> Result<Vec<u8>, ProfileError> {
+    let mut profile = parse_profile(payload)?;
+    profile.tags = tags;
     serde_json::to_vec(&profile).map_err(|_| ProfileError::CannotSerializePayload)
 }
 

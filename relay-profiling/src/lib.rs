@@ -105,7 +105,8 @@ mod sample;
 mod transaction_metadata;
 mod utils;
 
-use relay_general::protocol::EventId;
+use relay_general::protocol::{EventId, Tags};
+use relay_general::types::Annotated;
 
 use crate::android::parse_android_profile;
 use crate::cocoa::parse_cocoa_profile;
@@ -137,15 +138,18 @@ fn minimal_profile_from_json(data: &[u8]) -> Result<MinimalProfile, ProfileError
     serde_json::from_slice(data).map_err(ProfileError::InvalidJson)
 }
 
-pub fn expand_profile(payload: &[u8]) -> Result<(EventId, Vec<u8>), ProfileError> {
+pub fn expand_profile(
+    payload: &[u8],
+    tags: Option<Annotated<Tags>>,
+) -> Result<(EventId, Vec<u8>), ProfileError> {
     let profile = match minimal_profile_from_json(payload) {
         Ok(profile) => profile,
         Err(err) => return Err(err),
     };
     let processed_payload = match profile.version {
-        Version::V1 => parse_sample_profile(payload),
+        Version::V1 => parse_sample_profile(payload, tags),
         Version::Unknown => match profile.platform {
-            Platform::Android => parse_android_profile(payload),
+            Platform::Android => parse_android_profile(payload, tags),
             Platform::Cocoa => parse_cocoa_profile(payload),
             _ => return Err(ProfileError::PlatformNotSupported),
         },
@@ -176,12 +180,12 @@ mod tests {
     #[test]
     fn test_expand_profile_with_version() {
         let payload = include_bytes!("../tests/fixtures/profiles/sample/roundtrip.json");
-        assert!(expand_profile(payload).is_ok());
+        assert!(expand_profile(payload, None).is_ok());
     }
 
     #[test]
     fn test_expand_profile_without_version() {
         let payload = include_bytes!("../tests/fixtures/profiles/cocoa/roundtrip.json");
-        assert!(expand_profile(payload).is_ok());
+        assert!(expand_profile(payload, None).is_ok());
     }
 }

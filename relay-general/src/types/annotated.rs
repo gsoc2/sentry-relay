@@ -79,7 +79,7 @@ pub enum ProcessingAction {
 }
 
 /// Wrapper for data fields with optional meta data.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Annotated<T>(pub Option<T>, pub Meta);
 
 /// An utility to serialize annotated objects with payload.

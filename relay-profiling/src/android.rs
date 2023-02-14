@@ -5,7 +5,8 @@ use android_trace_log::{AndroidTraceLog, Clock, Time, Vm};
 use data_encoding::BASE64_NOPAD;
 use serde::{Deserialize, Serialize};
 
-use relay_general::protocol::EventId;
+use relay_general::protocol::{EventId, Tags};
+use relay_general::types::Annotated;
 
 use crate::measurements::Measurement;
 use crate::transaction_metadata::TransactionMetadata;
@@ -70,6 +71,9 @@ struct AndroidProfile {
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     measurements: Option<HashMap<String, Measurement>>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    tags: Option<Annotated<Tags>>,
 }
 
 impl AndroidProfile {
@@ -161,8 +165,12 @@ fn parse_profile(payload: &[u8]) -> Result<AndroidProfile, ProfileError> {
     Ok(profile)
 }
 
-pub fn parse_android_profile(payload: &[u8]) -> Result<Vec<u8>, ProfileError> {
-    let profile = parse_profile(payload)?;
+pub fn parse_android_profile(
+    payload: &[u8],
+    tags: Option<Annotated<Tags>>,
+) -> Result<Vec<u8>, ProfileError> {
+    let mut profile = parse_profile(payload)?;
+    profile.tags = tags;
     serde_json::to_vec(&profile).map_err(|_| ProfileError::CannotSerializePayload)
 }
 
