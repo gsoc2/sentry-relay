@@ -1,0 +1,31 @@
+{
+   "format_version": 10,
+   "pipelines": {
+      "deploy-relay": {
+         "group": "relay",
+         "lock_behavior": "unlockWhenFinished",
+         "materials": { },
+         "stages": [
+            {
+               "start-pipedream": {
+                  "approval": {
+                     "allow_only_on_success": true,
+                     "type": "manual"
+                  },
+                  "jobs": {
+                     "start": {
+                        "tasks": [
+                           {
+                              "exec": {
+                                 "command": true
+                              }
+                           }
+                        ]
+                     }
+                  }
+               }
+            }
+         ]
+      }
+   }
+}
