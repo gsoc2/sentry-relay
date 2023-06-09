@@ -1,6 +1,19 @@
 local pipedream = import './libs/pipedream.libsonnet';
 local relay = import './libs/relay-pipeline.libsonnet';
 
+local pipedream_config = {
+    name: 'relay',
+    auto_deploy: false,
+    materials: {
+        relay_repo: {
+            git: 'git@github.com:getsentry/relay.git',
+            shallow_clone: true,
+            branch: 'master',
+            destination: 'relay',
+        },
+    },
+};
+
 local region_configs = {
     s4s: {
         gcp_project: 's4s-gcp',
@@ -26,4 +39,4 @@ local region_configs = {
     },
 };
 
-pipedream.Render("relay", region_configs, relay.Pipeline)
+pipedream.Render(pipedream_config, region_configs, relay.Pipeline)

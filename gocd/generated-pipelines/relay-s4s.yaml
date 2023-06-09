@@ -20,7 +20,7 @@
             },
             "upstream_pipeline": {
                "pipeline": "deploy-relay",
-               "stage": "start-pipedream"
+               "stage": "continue-pipedream"
             }
          },
          "stages": [

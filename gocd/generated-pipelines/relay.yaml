@@ -4,12 +4,18 @@
       "deploy-relay": {
          "group": "relay",
          "lock_behavior": "unlockWhenFinished",
-         "materials": { },
+         "materials": {
+            "relay_repo": {
+               "branch": "master",
+               "destination": "relay",
+               "git": "git@github.com:getsentry/relay.git",
+               "shallow_clone": true
+            }
+         },
          "stages": [
             {
-               "start-pipedream": {
+               "continue-pipedream": {
                   "approval": {
-                     "allow_only_on_success": true,
                      "type": "manual"
                   },
                   "jobs": {
