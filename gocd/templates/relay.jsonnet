@@ -1,4 +1,4 @@
-local pipedream = import './libs/pipedream.libsonnet';
+local pipedream = import 'github.com/getsentry/gocd-jsonnet/v1.0.0/pipedream.libsonnet';
 local relay = import './libs/relay-pipeline.libsonnet';
 
 local pipedream_config = {
@@ -14,29 +14,4 @@ local pipedream_config = {
     },
 };
 
-local region_configs = {
-    s4s: {
-        gcp_project: 's4s-gcp',
-        gke_cluster: '',
-        gke_region: '',
-        gke_cluster_zone: '',
-        gke_bastion_zone: '',
-
-    },
-    nam: {
-        gcp_project: 's4s-nam',
-        gke_cluster: '',
-        gke_region: '',
-        gke_cluster_zone: '',
-        gke_bastion_zone: '',
-    },
-    eu: {
-        gcp_project: 's4s-eu',
-        gke_cluster: '',
-        gke_region: '',
-        gke_cluster_zone: '',
-        gke_bastion_zone: '',
-    },
-};
-
-pipedream.Render(pipedream_config, region_configs, relay.Pipeline)
+pipedream.render(pipedream_config, relay.Pipeline)

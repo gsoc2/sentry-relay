@@ -1,4 +1,4 @@
-# shellcheck shell=bash
+#!/bin/bash
 
 /devinfra/scripts/checks/githubactions/checkruns.py \
     getsentry/relay \

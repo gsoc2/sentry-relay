@@ -1,27 +1,4 @@
-local gocd = import './gocd.libsonnet';
-
-local promoteToPops = [
-  {
-    'promote-to-pops': {
-      approval: {
-        type: 'success',
-        allow_only_on_success: true,
-      },
-      jobs: {
-        deploy: {
-          elastic_profile_id: 'relay',
-          tasks: [
-            {
-              exec: {
-                command: true,
-              },
-            },
-          ],
-        },
-      },
-    },
-  },
-];
+local gocdtasks = import 'github.com/getsentry/gocd-jsonnet/v1.0.0/gocdtasks.libsonnet';
 
 {
   Pipeline(region, config):: {
@@ -58,7 +35,7 @@ local promoteToPops = [
               timeout: 1800,
               elastic_profile_id: 'relay',
               tasks: [
-                gocd.script_task(importstr '../bash/github-check-runs.sh'),
+                gocdtasks.script(importstr '../bash/github-check-runs.sh'),
               ],
             },
           },
@@ -85,19 +62,19 @@ local promoteToPops = [
               timeout: 1200,
               elastic_profile_id: 'relay',
               tasks: [
-                gocd.script_task(importstr '../bash/create-sentry-release.sh'),
+                gocdtasks.script(importstr '../bash/create-sentry-release.sh'),
               ],
             },
             deploy: {
               timeout: 1200,
               elastic_profile_id: 'relay',
               tasks: [
-                gocd.script_task(importstr '../bash/deploy-relay.sh'),
+                gocdtasks.script(importstr '../bash/deploy-relay.sh'),
               ],
             },
           },
         },
       },
-    ] + [x for x in promoteToPops if region == 'nam'],
+    ],
   },
 }

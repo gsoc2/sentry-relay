@@ -1,4 +1,4 @@
-# shellcheck shell=bash
+#!/bin/bash
 
 /devinfra/scripts/k8s/k8stunnel && \
 /devinfra/scripts/k8s/k8s-deploy.py \
