@@ -76,6 +76,7 @@ use std::net::IpAddr;
 use std::num::ParseIntError;
 
 use chrono::{DateTime, Utc};
+use deepsize::DeepSizeOf;
 use rand::distributions::Uniform;
 use rand::Rng;
 use rand_pcg::Pcg32;
@@ -107,6 +108,7 @@ pub enum RuleType {
 /// For string values it supports case-insensitive comparison.
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
+#[derive(deepsize::DeepSizeOf)]
 pub struct EqCondOptions {
     #[serde(default)]
     pub ignore_case: bool,
@@ -120,6 +122,15 @@ pub struct EqCondition {
     pub value: Value,
     #[serde(default, skip_serializing_if = "is_default")]
     pub options: EqCondOptions,
+}
+
+impl DeepSizeOf for EqCondition {
+    fn deep_size_of_children(&self, context: &mut deepsize::Context) -> usize {
+        self.name.deep_size_of()
+            + self.options.deep_size_of()
+            + std::mem::size_of_val(&self.value)
+            + self.value.as_str().map_or(0, |s| s.len()) // lower bound
+    }
 }
 
 impl EqCondition {
@@ -179,6 +190,7 @@ macro_rules! impl_cmp_condition {
             pub name: String,
             pub value: Number,
         }
+        deepsize::known_deep_size!(40; $struct_name);
 
         impl $struct_name {
             fn matches<T>(&self, value_provider: &T) -> bool where T: FieldValueProvider{
@@ -276,7 +288,7 @@ impl OrCondition {
 ///
 /// Creates a condition that is true when all
 /// inner conditions are true.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, deepsize::DeepSizeOf)]
 pub struct AndCondition {
     inner: Vec<RuleCondition>,
 }
@@ -318,6 +330,7 @@ impl NotCondition {
 /// A condition from a sampling rule.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", tag = "op")]
+#[derive(deepsize::DeepSizeOf)]
 pub enum RuleCondition {
     Eq(EqCondition),
     Gte(GteCondition),
@@ -333,7 +346,11 @@ pub enum RuleCondition {
     Unsupported,
 }
 
-deepsize::known_deep_size!(0; RuleCondition);
+deepsize::known_deep_size!(0;GlobCondition);
+deepsize::known_deep_size!(0;OrCondition);
+// deepsize::known_deep_size!(0;AndCondition);
+deepsize::known_deep_size!(0;NotCondition);
+deepsize::known_deep_size!(0;CustomCondition);
 
 impl RuleCondition {
     /// Returns a condition that matches everything.
