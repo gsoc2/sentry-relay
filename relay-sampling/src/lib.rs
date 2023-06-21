@@ -333,6 +333,8 @@ pub enum RuleCondition {
     Unsupported,
 }
 
+deepsize::known_deep_size!(0; RuleCondition);
+
 impl RuleCondition {
     /// Returns a condition that matches everything.
     pub fn all() -> Self {
