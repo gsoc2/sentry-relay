@@ -6,7 +6,7 @@ local gocdtasks = import 'github.com/getsentry/gocd-jsonnet/v1.0.0/gocd-tasks.li
     environment_variables: {
       SENTRY_REGION: region,
     },
-    group: 'relay-next',
+    group: 'pipedream-test',
     lock_behavior: 'unlockWhenFinished',
     materials: {
       relay_repo: {

@@ -2,7 +2,7 @@ local relay = import './libs/relay.libsonnet';
 local pipedream = import 'github.com/getsentry/gocd-jsonnet/v1.0.0/pipedream.libsonnet';
 
 local pipedream_config = {
-  name: 'relay-next',
+  name: 'pipedream-test',
   auto_deploy: false,
   auto_pipeline_progression: false,
   materials: {
