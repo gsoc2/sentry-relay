@@ -101,17 +101,18 @@ pub enum RuleType {
     Unsupported,
 }
 
-/// A condition that checks the values using the equality operator.
-///
-/// For string values it supports case-insensitive comparison.
+/// Options for [`EqCondition`].
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct EqCondOptions {
+    /// Applies ASCII-case-insensitive matching. Defaults to `false`.
     #[serde(default)]
     pub ignore_case: bool,
 }
 
-/// A condition that checks for equality
+/// A condition that compares the values using the equality operator.
+///
+/// For string values it supports case-insensitive comparison.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EqCondition {
@@ -171,20 +172,32 @@ impl EqCondition {
     }
 }
 
+/// Options for all comparison operators.
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct CmpOptions {
+    /// Applies the comparison on a semantic version string.
+    #[serde(default)]
+    pub semver: bool,
+}
+
 macro_rules! impl_cmp_condition {
     ($struct_name:ident, $operator:tt) => {
         #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
         pub struct $struct_name {
             pub name: String,
-            pub value: Number,
+            pub value: Value,
+            #[serde(default, skip_serializing_if = "is_default")]
+            pub options: CmpOptions,
         }
 
         impl $struct_name {
             fn matches<T>(&self, value_provider: &T) -> bool where T: FieldValueProvider{
-                let value = match value_provider.get_value(self.name.as_str()) {
-                    Value::Number(x) => x,
-                    _ => return false
-                };
+                let value = value_provider.get_value(self.name.as_str());
+
+                if self.options.semver {
+                    todo!()
+                }
 
                 // Try various conversion functions in order of expensiveness and likelihood
                 // - as_i64 is not really fast, but most values in sampling rules can be i64, so we could
@@ -195,6 +208,8 @@ macro_rules! impl_cmp_condition {
                 } else if let (Some(a), Some(b)) = (value.as_u64(), self.value.as_u64()) {
                     a $operator b
                 } else if let (Some(a), Some(b)) = (value.as_f64(), self.value.as_f64()) {
+                    a $operator b
+                } else if let (Some(a), Some(b)) = (value.as_str(), self.value.as_str()) {
                     a $operator b
                 } else {
                     false
