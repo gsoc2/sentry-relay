@@ -83,9 +83,6 @@ impl UpstreamQuery for GetGlobalConfig {
 /// The message for requesting the most recent global config from [`GlobalConfigService`].
 pub struct Get;
 
-/// The message for receiving a watch that subscribes to the [`GlobalConfigService`].
-pub struct Subscribe;
-
 /// An interface to get [`GlobalConfig`]s through [`GlobalConfigService`].
 ///
 /// For a one-off update, [`GlobalConfigService`] responds to
@@ -97,8 +94,6 @@ pub struct Subscribe;
 pub enum GlobalConfigManager {
     /// Returns the most recent global config.
     Get(relay_system::Sender<Arc<GlobalConfig>>),
-    /// Returns a [`watch::Receiver`] where global config updates will be sent to.
-    Subscribe(relay_system::Sender<watch::Receiver<Arc<GlobalConfig>>>),
 }
 
 impl Interface for GlobalConfigManager {}
@@ -108,17 +103,6 @@ impl FromMessage<Get> for GlobalConfigManager {
 
     fn from_message(_: Get, sender: relay_system::Sender<Arc<GlobalConfig>>) -> Self {
         Self::Get(sender)
-    }
-}
-
-impl FromMessage<Subscribe> for GlobalConfigManager {
-    type Response = AsyncResponse<watch::Receiver<Arc<GlobalConfig>>>;
-
-    fn from_message(
-        _: Subscribe,
-        sender: relay_system::Sender<watch::Receiver<Arc<GlobalConfig>>>,
-    ) -> Self {
-        Self::Subscribe(sender)
     }
 }
 
@@ -165,9 +149,6 @@ impl GlobalConfigService {
         match message {
             GlobalConfigManager::Get(sender) => {
                 sender.send(self.global_config_watch.borrow().clone());
-            }
-            GlobalConfigManager::Subscribe(sender) => {
-                sender.send(self.global_config_watch.subscribe());
             }
         }
     }
