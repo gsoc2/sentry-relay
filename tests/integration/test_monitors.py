@@ -1,4 +1,5 @@
 import base64
+import json
 
 
 def generate_check_in(slug):
@@ -9,6 +10,49 @@ def generate_check_in(slug):
         "duration": 21.0,
     }
 
+
+def test_monitor_query_params(mini_sentry, relay):
+    relay = relay(mini_sentry)
+    mini_sentry.add_basic_project_config(42)
+
+    check_in = generate_check_in("my-monitor")
+    relay.send_check_in(42, check_in)
+
+    envelope = mini_sentry.captured_events.get(timeout=1)
+    assert len(envelope.items) == 1
+    item = envelope.items[0]
+    assert item.headers["type"] == "check_in"
+
+    check_in = json.loads(item.get_bytes().decode())
+    assert check_in == {
+        "check_in_id": "a460c25ff2554577b920fcfacae4e5eb",
+        "monitor_slug": "my-monitor",
+        "status": "in_progress",
+        "duration": 21.0,
+    }
+
+
+def test_monitor_json_body(mini_sentry, relay):
+    relay = relay(mini_sentry)
+    mini_sentry.add_basic_project_config(42)
+
+    check_in = generate_check_in("my-monitor")
+    monitor_slug = check_in.pop("monitor_slug")  # NB: Should not be part of the payload!
+    public_key = relay.get_dsn_public_key(42)
+    response = relay.post(f"/api/42/cron/{monitor_slug}/{public_key}", json=check_in)
+
+    envelope = mini_sentry.captured_events.get(timeout=1)
+    assert len(envelope.items) == 1
+    item = envelope.items[0]
+    assert item.headers["type"] == "check_in"
+
+    check_in = json.loads(item.get_bytes().decode())
+    assert check_in == {
+        "check_in_id": "a460c25ff2554577b920fcfacae4e5eb",
+        "monitor_slug": "my-monitor",
+        "status": "in_progress",
+        "duration": 21.0,
+    }
 
 def test_monitors_with_processing(
     mini_sentry, relay_with_processing, monitors_consumer
