@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.32
 
 - Add `scraping_attempts` field to the event schema. ([#2575](https://github.com/getsentry/relay/pull/2575))
 
