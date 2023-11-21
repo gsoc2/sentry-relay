@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fmt::{self, Display};
 
@@ -114,7 +115,7 @@ impl IntoMetric for SessionMetric {
         let mri = MetricResourceIdentifier {
             ty: value.ty(),
             namespace: MetricNamespace::Sessions,
-            name: &name,
+            name: Cow::Borrowed(&name), // TODO we can store the mri now with .into_owned()
             unit: MetricUnit::None,
         };
 

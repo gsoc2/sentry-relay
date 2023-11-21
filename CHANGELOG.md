@@ -1,5 +1,12 @@
 # Changelog
 
+
+## Unreleased
+
+**Internal**:
+
+- Add support for metric metadata. ([#2751](https://github.com/getsentry/relay/pull/2751))
+
 ## 23.11.1
 
 **Features**:

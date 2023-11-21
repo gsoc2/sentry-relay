@@ -110,14 +110,14 @@ impl IntoMetric for TransactionMetric {
         let mri = MetricResourceIdentifier {
             ty: value.ty(),
             namespace,
-            name: &name,
+            name,
             unit,
         };
 
         Bucket {
             timestamp,
             width: 0,
-            name: mri.to_string(),
+            name: mri.to_string(), // TODO can store an owned mri
             value,
             tags,
         }
